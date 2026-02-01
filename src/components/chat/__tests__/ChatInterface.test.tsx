@@ -161,6 +161,12 @@ test("scrolls when messages change", () => {
 });
 
 test("renders with correct layout classes", () => {
+  // Render with messages so ScrollArea is shown
+  (useChat as any).mockReturnValue({
+    ...mockUseChat,
+    messages: [{ id: "1", role: "user", content: "Hello" }],
+  });
+
   const { container } = render(<ChatInterface />);
 
   const mainDiv = container.firstChild as HTMLElement;

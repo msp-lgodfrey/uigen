@@ -96,11 +96,12 @@ test("getToolCallMessage handles empty args", () => {
 test("ToolCallDisplay renders friendly message for str_replace_editor create", () => {
   render(
     <ToolCallDisplay
-      toolInvocation={{
-        toolName: "str_replace_editor",
+      toolPart={{
+        type: "str_replace_editor",
+        toolCallId: "1",
         state: "result",
-        args: { command: "create", path: "/components/Button.tsx" },
-        result: "Success",
+        input: { command: "create", path: "/components/Button.tsx" },
+        output: "Success",
       }}
     />
   );
@@ -110,11 +111,12 @@ test("ToolCallDisplay renders friendly message for str_replace_editor create", (
 test("ToolCallDisplay renders friendly message for str_replace_editor str_replace", () => {
   render(
     <ToolCallDisplay
-      toolInvocation={{
-        toolName: "str_replace_editor",
+      toolPart={{
+        type: "str_replace_editor",
+        toolCallId: "2",
         state: "result",
-        args: { command: "str_replace", path: "/App.jsx" },
-        result: "Success",
+        input: { command: "str_replace", path: "/App.jsx" },
+        output: "Success",
       }}
     />
   );
@@ -124,11 +126,12 @@ test("ToolCallDisplay renders friendly message for str_replace_editor str_replac
 test("ToolCallDisplay renders friendly message for file_manager delete", () => {
   render(
     <ToolCallDisplay
-      toolInvocation={{
-        toolName: "file_manager",
+      toolPart={{
+        type: "file_manager",
+        toolCallId: "3",
         state: "result",
-        args: { command: "delete", path: "/temp.txt" },
-        result: { success: true },
+        input: { command: "delete", path: "/temp.txt" },
+        output: { success: true },
       }}
     />
   );
@@ -138,11 +141,12 @@ test("ToolCallDisplay renders friendly message for file_manager delete", () => {
 test("ToolCallDisplay shows green dot for completed state", () => {
   const { container } = render(
     <ToolCallDisplay
-      toolInvocation={{
-        toolName: "str_replace_editor",
+      toolPart={{
+        type: "str_replace_editor",
+        toolCallId: "4",
         state: "result",
-        args: { command: "create", path: "/file.tsx" },
-        result: "Success",
+        input: { command: "create", path: "/file.tsx" },
+        output: "Success",
       }}
     />
   );
@@ -154,10 +158,11 @@ test("ToolCallDisplay shows green dot for completed state", () => {
 test("ToolCallDisplay shows spinner for loading state", () => {
   const { container } = render(
     <ToolCallDisplay
-      toolInvocation={{
-        toolName: "str_replace_editor",
+      toolPart={{
+        type: "str_replace_editor",
+        toolCallId: "5",
         state: "partial-call",
-        args: { command: "create", path: "/file.tsx" },
+        input: { command: "create", path: "/file.tsx" },
       }}
     />
   );
@@ -169,10 +174,11 @@ test("ToolCallDisplay shows spinner for loading state", () => {
 test("ToolCallDisplay shows spinner when state is result but no result value", () => {
   const { container } = render(
     <ToolCallDisplay
-      toolInvocation={{
-        toolName: "str_replace_editor",
+      toolPart={{
+        type: "str_replace_editor",
+        toolCallId: "6",
         state: "result",
-        args: { command: "create", path: "/file.tsx" },
+        input: { command: "create", path: "/file.tsx" },
       }}
     />
   );
@@ -184,11 +190,12 @@ test("ToolCallDisplay shows spinner when state is result but no result value", (
 test("ToolCallDisplay falls back to tool name for unknown tool", () => {
   render(
     <ToolCallDisplay
-      toolInvocation={{
-        toolName: "custom_tool",
+      toolPart={{
+        type: "custom_tool",
+        toolCallId: "7",
         state: "result",
-        args: {},
-        result: "done",
+        input: {},
+        output: "done",
       }}
     />
   );
@@ -198,11 +205,12 @@ test("ToolCallDisplay falls back to tool name for unknown tool", () => {
 test("ToolCallDisplay has correct styling classes", () => {
   const { container } = render(
     <ToolCallDisplay
-      toolInvocation={{
-        toolName: "str_replace_editor",
+      toolPart={{
+        type: "str_replace_editor",
+        toolCallId: "8",
         state: "result",
-        args: { command: "create", path: "/file.tsx" },
-        result: "Success",
+        input: { command: "create", path: "/file.tsx" },
+        output: "Success",
       }}
     />
   );

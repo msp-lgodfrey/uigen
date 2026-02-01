@@ -1,6 +1,6 @@
 import type { FileNode } from "@/lib/file-system";
 import { VirtualFileSystem } from "@/lib/file-system";
-import { streamText, appendResponseMessages } from "ai";
+import { streamText, stepCountIs, convertToModelMessages } from "ai";
 import { buildStrReplaceTool } from "@/lib/tools/str-replace";
 import { buildFileManagerTool } from "@/lib/tools/file-manager";
 import { prisma } from "@/lib/prisma";
@@ -16,7 +16,11 @@ export async function POST(req: Request) {
   }: { messages: any[]; files: Record<string, FileNode>; projectId?: string } =
     await req.json();
 
-  messages.unshift({
+  // Convert UIMessages to ModelMessages for streamText
+  const modelMessages = await convertToModelMessages(messages);
+
+  // Add system message at the beginning
+  modelMessages.unshift({
     role: "system",
     content: generationPrompt,
     providerOptions: {
@@ -29,13 +33,11 @@ export async function POST(req: Request) {
   fileSystem.deserializeFromNodes(files);
 
   const model = getLanguageModel();
-  // Use fewer steps for mock provider to prevent repetition
-  const isMockProvider = !process.env.ANTHROPIC_API_KEY;
   const result = streamText({
     model,
-    messages,
-    maxTokens: 10_000,
-    maxSteps: isMockProvider ? 4 : 40,
+    messages: modelMessages,
+    maxOutputTokens: 10_000,
+    stopWhen: stepCountIs(40),
     onError: (err: any) => {
       console.error(err);
     },
@@ -54,13 +56,11 @@ export async function POST(req: Request) {
             return;
           }
 
-          // Get the messages from the response
+          // Get all messages excluding system messages for persistence
+          const inputMessages = modelMessages.filter((m: any) => m.role !== "system");
           const responseMessages = response.messages || [];
-          // Combine original messages with response messages
-          const allMessages = appendResponseMessages({
-            messages: [...messages.filter((m) => m.role !== "system")],
-            responseMessages,
-          });
+          // Combine input messages with response messages
+          const allMessages = [...inputMessages, ...responseMessages];
 
           await prisma.project.update({
             where: {
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse();
 }
 
 export const maxDuration = 120;

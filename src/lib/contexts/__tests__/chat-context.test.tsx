@@ -91,20 +91,23 @@ describe("ChatContext", () => {
     });
 
     render(
-      <ChatProvider projectId="test-project" initialMessages={initialMessages}>
+      <ChatProvider projectId="test-project" initialUIMessages={initialMessages}>
         <TestComponent />
       </ChatProvider>
     );
 
-    expect(useAIChat).toHaveBeenCalledWith({
-      api: "/api/chat",
-      initialMessages,
-      body: {
-        files: mockFileSystem.serialize(),
-        projectId: "test-project",
-      },
-      onToolCall: expect.any(Function),
-    });
+    expect(useAIChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: initialMessages,
+        onToolCall: expect.any(Function),
+      })
+    );
+
+    // Verify transport was passed with correct config
+    const callArgs = (useAIChat as any).mock.calls[0][0];
+    expect(callArgs.transport).toBeDefined();
+    expect(callArgs.transport.api).toBe("/api/chat");
+    expect(callArgs.transport.body.projectId).toBe("test-project");
 
     expect(screen.getByTestId("messages").textContent).toBe("2");
   });
