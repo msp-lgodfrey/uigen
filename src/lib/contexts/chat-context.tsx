@@ -5,19 +5,23 @@ import {
   useContext,
   ReactNode,
   useEffect,
+  useState,
+  useCallback,
+  useMemo,
 } from "react";
 import { useChat as useAIChat } from "@ai-sdk/react";
-import { Message } from "ai";
+import { DefaultChatTransport } from "ai";
+import type { UIMessage } from "ai";
 import { useFileSystem } from "./file-system-context";
 import { setHasAnonWork } from "@/lib/anon-work-tracker";
 
 interface ChatContextProps {
   projectId?: string;
-  initialMessages?: Message[];
+  initialUIMessages?: UIMessage[];
 }
 
 interface ChatContextType {
-  messages: Message[];
+  messages: UIMessage[];
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -29,27 +33,52 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 export function ChatProvider({
   children,
   projectId,
-  initialMessages = [],
+  initialUIMessages = [],
 }: ChatContextProps & { children: ReactNode }) {
   const { fileSystem, handleToolCall } = useFileSystem();
+  const [input, setInput] = useState("");
 
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    status,
-  } = useAIChat({
-    api: "/api/chat",
-    initialMessages,
-    body: {
-      files: fileSystem.serialize(),
-      projectId,
-    },
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: {
+          files: fileSystem.serialize(),
+          projectId,
+        },
+      }),
+    [fileSystem, projectId]
+  );
+
+  const { messages, sendMessage, status } = useAIChat({
+    transport,
+    messages: initialUIMessages,
     onToolCall: ({ toolCall }) => {
-      handleToolCall(toolCall);
+      // Transform the new tool call format to match the expected format
+      const transformedToolCall = {
+        toolName: toolCall.toolName,
+        args: (toolCall as any).input ?? {},
+      };
+      handleToolCall(transformedToolCall);
     },
   });
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInput(e.target.value);
+    },
+    []
+  );
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (!input.trim()) return;
+      sendMessage({ text: input });
+      setInput("");
+    },
+    [input, sendMessage]
+  );
 
   // Track anonymous work
   useEffect(() => {

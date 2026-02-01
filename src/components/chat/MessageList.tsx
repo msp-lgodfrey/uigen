@@ -1,13 +1,21 @@
 "use client";
 
-import { Message } from "ai";
+import type { UIMessage } from "ai";
 import { cn } from "@/lib/utils";
 import { User, Bot, Loader2 } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ToolCallDisplay } from "./ToolCallDisplay";
 
+function getMessageText(message: UIMessage): string {
+  if (!message.parts) return "";
+  return message.parts
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map((part) => part.text)
+    .join("");
+}
+
 interface MessageListProps {
-  messages: Message[];
+  messages: UIMessage[];
   isLoading?: boolean;
 }
 
@@ -29,7 +37,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
       <div className="space-y-6 max-w-4xl mx-auto w-full">
         {messages.map((message) => (
           <div
-            key={message.id || message.content}
+            key={message.id}
             className={cn(
               "flex gap-4",
               message.role === "user" ? "justify-end" : "justify-start"
@@ -54,7 +62,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                   : "bg-white text-neutral-900 border border-neutral-200 shadow-sm"
               )}>
                 <div className="text-sm">
-                  {message.parts ? (
+                  {message.parts && message.parts.length > 0 ? (
                     <>
                       {message.parts.map((part, partIndex) => {
                         switch (part.type) {
@@ -72,25 +80,28 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                             return (
                               <div key={partIndex} className="mt-3 p-3 bg-white/50 rounded-md border border-neutral-200">
                                 <span className="text-xs font-medium text-neutral-600 block mb-1">Reasoning</span>
-                                <span className="text-sm text-neutral-700">{part.reasoning}</span>
+                                <span className="text-sm text-neutral-700">{part.text}</span>
                               </div>
                             );
-                          case "tool-invocation":
-                            return (
-                              <ToolCallDisplay
-                                key={partIndex}
-                                toolInvocation={part.toolInvocation}
-                              />
-                            );
-                          case "source":
+                          case "source-url":
+                          case "source-document":
                             return (
                               <div key={partIndex} className="mt-2 text-xs text-neutral-500">
-                                Source: {JSON.stringify(part.source)}
+                                Source: {JSON.stringify(part)}
                               </div>
                             );
                           case "step-start":
                             return partIndex > 0 ? <hr key={partIndex} className="my-3 border-neutral-200" /> : null;
                           default:
+                            // Handle tool invocation parts (type starts with "tool-")
+                            if (part.type.startsWith("tool-")) {
+                              return (
+                                <ToolCallDisplay
+                                  key={partIndex}
+                                  toolPart={part as any}
+                                />
+                              );
+                            }
                             return null;
                         }
                       })}
@@ -103,12 +114,6 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                           </div>
                         )}
                     </>
-                  ) : message.content ? (
-                    message.role === "user" ? (
-                      <span className="whitespace-pre-wrap">{message.content}</span>
-                    ) : (
-                      <MarkdownRenderer content={message.content} className="prose-sm" />
-                    )
                   ) : isLoading &&
                     message.role === "assistant" &&
                     messages.indexOf(message) === messages.length - 1 ? (

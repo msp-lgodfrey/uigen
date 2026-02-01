@@ -1,20 +1,23 @@
 import { Loader2 } from "lucide-react";
 
 interface ToolCallDisplayProps {
-  toolInvocation: {
-    toolName: string;
+  toolPart: {
+    type: string;
+    toolCallId: string;
     state: string;
-    args: Record<string, unknown>;
-    result?: unknown;
+    input?: Record<string, unknown>;
+    output?: unknown;
+    errorText?: string;
   };
 }
 
 export function getToolCallMessage(
-  toolName: string,
-  args: Record<string, unknown>
+  toolType: string,
+  input: Record<string, unknown>
 ): string {
-  const command = args.command as string | undefined;
-  const path = args.path as string | undefined;
+  const toolName = toolType.replace(/^tool-/, "");
+  const command = input.command as string | undefined;
+  const path = input.path as string | undefined;
 
   if (toolName === "str_replace_editor" && path) {
     switch (command) {
@@ -47,10 +50,10 @@ export function getToolCallMessage(
   return toolName;
 }
 
-export function ToolCallDisplay({ toolInvocation }: ToolCallDisplayProps) {
-  const { toolName, state, args, result } = toolInvocation;
-  const message = getToolCallMessage(toolName, args);
-  const isComplete = state === "result" && result !== undefined;
+export function ToolCallDisplay({ toolPart }: ToolCallDisplayProps) {
+  const { type, state, input, output } = toolPart;
+  const message = getToolCallMessage(type, input || {});
+  const isComplete = (state === "output-available" || state === "result") && output !== undefined;
 
   return (
     <div className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-neutral-50 rounded-lg text-xs font-mono border border-neutral-200">
