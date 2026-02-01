@@ -62,13 +62,24 @@ export function MainContent({ user, project }: MainContentProps) {
                 <div className="h-14 border-b border-neutral-200/60 px-6 flex items-center justify-between bg-neutral-50/50">
                   <Tabs
                     value={activeView}
+                    defaultValue="preview"
                     onValueChange={(v) =>
                       setActiveView(v as "preview" | "code")
                     }
                   >
                     <TabsList className="bg-white/60 border border-neutral-200/60 p-0.5 h-9 shadow-sm">
-                      <TabsTrigger value="preview" className="data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-600 px-4 py-1.5 text-sm font-medium transition-all">Preview</TabsTrigger>
-                      <TabsTrigger value="code" className="data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-600 px-4 py-1.5 text-sm font-medium transition-all">Code</TabsTrigger>
+                      <TabsTrigger
+                        value="preview"
+                        className="data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-600 hover:text-neutral-900 px-4 py-1.5 text-sm font-medium transition-all active:scale-[0.98]"
+                      >
+                        Preview
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="code"
+                        className="data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm text-neutral-600 hover:text-neutral-900 px-4 py-1.5 text-sm font-medium transition-all active:scale-[0.98]"
+                      >
+                        Code
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
                   <HeaderActions user={user} projectId={project?.id} />
